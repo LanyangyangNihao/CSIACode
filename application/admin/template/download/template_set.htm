@@ -1,0 +1,175 @@
+{include file="public/layout" /}
+<script type="text/javascript" src="__SKIN__/js/clipboard.min.js"></script>
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit; min-width:auto;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page" style="min-width:auto;box-shadow:none;">
+    <div class="flexigrid">
+        <div id="explanation" class="explanation" style="color: rgb(44, 188, 163); background-color: rgb(237, 251, 248); width: 99%; height: 100%;">
+            <div id="checkZoom" class="title"><i class="fa fa-lightbulb-o"></i>
+                <h4 title="提示相关设置操作时应注意的要点">提示</h4>
+                <span title="收起提示" id="explanationZoom" style="display: block;"></span>
+            </div>
+            <ul>
+                <li>参数启用后，请确认前端模板是否正确调用此标签，具体使用方法可查看官方标签手册</li>
+            </ul>
+        </div>
+        <br>
+        <div class="hDiv">
+            <div class="hDivBox">
+                <table cellspacing="0" cellpadding="0" style="width: 100%">
+                    <thead>
+                    <tr>
+                        <th abbr="ac_id" axis="col4">
+                            <div class="tl pl10">参数名称</div>
+                        </th>
+                        <th axis="col1" class="w80">
+                            <div class="tc">启用</div>
+                        </th>
+                        <th axis="col1" class="w80">
+                            <div class="tc">操作</div>
+                        </th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <div class="bDiv" style="height: auto;">
+            <div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
+                <table style="width: 100%">
+                    <tbody>
+                    {empty name="list"}
+                        <tr>
+                            <td class="no-data" align="center" axis="col0" colspan="50">
+                                <div class="no_row">
+                                    <div class="no_pic"><img src="__SKIN__/images/null-data.png"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    {else/}
+                        {foreach name="list" item="vo" key="k" }
+                        <tr>
+                            <td style="width: 100%">
+                                <div class="tl pl10">
+                                    <input type="text" data-id='{$vo.field_id}' id="{$vo.field_name}" data-name="{$vo.field_name}" onchange="UpFieldTitle(this)" value="{$vo.field_title}">
+                                    {eq name="$vo.field_name" value="server_name"}
+                                    &nbsp;&nbsp;&nbsp;&nbsp;<a href="{:url('Download/set_servername')}" style="color: white;" class="ncap-btn ncap-btn-green" id="submitBtn">设置</a>
+                                    {/eq}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="w80 tc">
+                                    <label>
+                                        <input type="checkbox" data-id='{$vo.field_id}' data-title="{$vo.field_title}"  onclick="UpFieldUse(this);" data-name='{$vo.field_name}' {eq name='$vo.field_use' value='1'}checked{/eq}>
+                                    </label>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="w80 tc">
+                                    <a href="javascript:void(0);" onclick="showtext('{$vo.field_name}');" class="btn blue {$vo.field_name}" data-clipboard-text="{$field.{$vo.field_name}}">标签调用</a>
+                                </div>
+                            </td>
+                            
+                            
+                        </tr>
+                        {/foreach}
+                    {/empty}
+                    </tbody>
+                </table>
+            </div>
+            <div class="iDiv" style="display: none;"></div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function(){
+        // 表格行点击选中切换
+        $('#flexigrid > table>tbody >tr').click(function(){
+            $(this).toggleClass('trSelected');
+        });
+
+        // 点击刷新数据
+        $('.fa-refresh').click(function(){
+            location.href = location.href;
+        });
+    });
+
+    function UpFieldTitle(obj)
+    {
+        // 字段标题
+        var field_title = $(obj).val();
+        // 字段名称
+        var field_name  = $(obj).attr('data-name');
+        // 字段ID
+        var field_id    = $(obj).attr('data-id');
+        // 更改字段
+        parent.$('span.title_'+field_name).html(field_title);
+        //文件上传列表的
+        // 更改字段
+        parent.$('th.th_' + field_name).html(field_title);
+        // 修改数据库中的信息
+        $.ajax({
+            url: "{:url('Download/template_set', ['_ajax'=>1])}",
+            data: {field_id:field_id,field_title:field_title},
+            type:'post',
+            dataType:'json',
+            success: function(res){
+                layer.msg(res.msg, {icon: 1, time:1000});
+            }
+        });
+    }
+
+    function UpFieldUse(obj)
+    {
+        // 字段名称
+        var field_name  = $(obj).attr('data-name');
+        // 字段标题
+        var field_title = $('#'+field_name).val();
+        // 字段ID
+        var field_id    = $(obj).attr('data-id');
+        // 字段是否使用
+        var field_use = '';
+
+        if ($(obj).is(':checked')) {
+            field_use = 1;
+            // 显示远程文件的字段
+            parent.$('.ey_'+field_name).show();
+
+            if (field_name == 'server_name') {
+                //显示文件列表中的字段表头
+                parent.$('.th_' + field_name).show();
+                //显示文件列表中的表格
+                parent.$('#TemplateSet').attr("data-servername_use", field_use);
+            }
+
+        } else {
+            field_use = 0;
+            // 隐藏远程文件的字段
+            parent.$('.ey_'+field_name).hide();
+
+            if (field_name == 'server_name') {
+                //隐藏文件列表中的字段表头
+                parent.$('.th_' + field_name).hide();
+                //隐藏文件列表中的表格
+                parent.$('#TemplateSet').attr("data-servername_use", field_use);
+            }
+
+        }
+        // 修改数据库中的信息
+        $.ajax({
+            url: "{:url('Download/template_set', ['_ajax'=>1])}",
+            data: {field_id:field_id,field_use:field_use},
+            type:'post',
+            dataType:'json',
+            success: function(res){
+
+            }
+        });
+    }
+    function showtext(classname){
+        var clipboard1 = new Clipboard("."+classname);clipboard1.on("success", function(e) {layer.msg("复制成功");});clipboard1.on("error", function(e) {layer.msg("复制失败！请手动复制", {icon:5});}); 
+    }
+
+</script>
+
+{include file="public/footer" /}

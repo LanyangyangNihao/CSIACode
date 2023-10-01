@@ -1,0 +1,27 @@
+<footer class="bg-main">
+	<div class="container-layout">
+		<ul>
+			{eyou:channel type="top" row="4" id="field"}
+			<li class="float-left item-{$i} hidden-l hidden-s">
+				<h3 class="text-middle margin-big-bottom">{$field.typename}</h3>
+				<ul>
+					{eyou:channel name="$field.children" row="100" id="field2"}
+					<li><a href="{$field2.typeurl}" title="{$field2.typename}">{$field2.typename}</a></li>
+					{/eyou:channel}
+				</ul>
+			</li>
+			 {/eyou:channel}
+			
+
+		
+		</ul>
+	</div>
+	<div class="blank-middle"></div>
+
+	<!-- 友情链接 end -->
+</footer>
+<!--底部版权-->
+
+<!-- 应用插件标签 start --> 
+{eyou:weapp type='default' /} 
+<!-- 应用插件标签 end -->

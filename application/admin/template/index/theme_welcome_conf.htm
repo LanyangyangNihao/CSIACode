@@ -1,0 +1,127 @@
+{eq name="'Index@theme_welcome_conf'|is_check_access" value="1"}
+    {eq name='$main_lang' value='$admin_lang'}
+    <form class="form-horizontal" id="postForm2" action="{:url('Index/theme_welcome_conf')}" method="post">
+        <div class="hDiv">
+            <div class="hDivBox">
+                <table cellspacing="0" cellpadding="0" style="width: 100%">
+                    <thead>
+                        <tr>
+                            <th class="sign w10" axis="col0">
+                                <div class="tc"></div>
+                            </th>
+                            <th abbr="article_title" axis="col3" class="w10">
+                                <div class="tc">欢迎页设置</div>
+                            </th>
+                            <th abbr="ac_id" axis="col4">
+                                <div class=""></div>
+                            </th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">
+                    <label for="welcome_tplname">主题风格</label>
+                </dt>
+                <dd class="opt">
+                    <div class="theme_style" id="welcome_theme_style">
+                        <ul>
+                            {volist name="$welcome_list" id="vo"}
+                            <li class="theme_style_li" {$vo.disabled_tips}>
+                                <img src="{$vo.theme_pic|get_default_pic=###}" {if condition="$vo['welcome_tplname'] == $global['web_theme_welcome_tplname']"} class="active" {/if}>
+                                <span><input name="welcome_tplname" value="{$vo.welcome_tplname}" data-theme_id="{$vo.theme_id}" type="radio" {if condition="$vo['welcome_tplname'] == $global['web_theme_welcome_tplname']"} checked="checked" {/if} {$vo.disabled}>{$vo.theme_title}</span>
+                            </li>
+                            {/volist}
+                            <li id="new_welcome_tplname"><img src="__SKIN__/images/theme/theme_pic_add.png"></li>
+                        </ul>
+                    </div>
+                </dd>
+            </dl>
+            <dl class="row">
+                <div class="bot">
+                    <a href="JavaScript:void(0);" onclick="checkSubmit2();" class="ncap-btn-big ncap-btn-green" id="submitBtn">确认提交</a>
+                </div>
+            </dl>
+        </div>
+    </form>
+    {/eq}
+    <script type="text/javascript">
+
+        $(document).ready(function(){
+            // 主题风格切换
+            $('#welcome_theme_style li.theme_style_li').live('click',function(){
+                var disabled = $(this).find('input[type=radio]').attr('disabled');
+                if (disabled == 'disabled') {
+                    var msg = $(this).attr('title');
+                    showErrorMsg(msg);
+                    return false;
+                }
+                $('#welcome_theme_style').find('li>img').removeClass('active');
+                $(this).find('img').addClass('active');
+                $(this).find('input[type=radio]').attr('checked', true);
+                var theme_id = $(this).find('input[type=radio]').attr('data-theme_id');
+                // layer_loading('正在切换');
+                $.ajax({
+                    type: "GET",
+                    url: "{:url('Index/ajax_get_theme_info', ['_ajax'=>1])}",
+                    data: {theme_id:theme_id},
+                    dataType: 'json',
+                    success: function (res) {
+                        layer.closeAll();
+                        if (res.code == 1) {
+                            var info = res.data.info;
+                            $('input[name=welcome_tplname]').val(info.welcome_tplname);
+                        } else {
+                            showErrorAlert(res.msg);
+                        }
+                    },
+                    error:function(e){
+                        layer.closeAll();
+                        showErrorAlert(e.responseText);
+                    }
+                });
+            });
+
+            $('#new_welcome_tplname').click(function(){
+                var url = "{:url('Index/ajax_add_welcome_tplfile')}";
+                //iframe窗
+                layer.open({
+                    type: 2,
+                    title: '新建欢迎页模板',
+                    fixed: true, //不固定
+                    shadeClose: false,
+                    shade: layer_shade,
+                    maxmin: true, //开启最大化最小化按钮
+                    area: ['600px', '350px'],
+                    content: url
+                });
+            });
+        });
+
+        function checkSubmit2(){
+            layer_loading('正在处理');
+            $.ajax({
+                type : 'post',
+                url : "{:url('Index/theme_welcome_conf', ['_ajax'=>1])}",
+                data : $('#postForm2').serialize(),
+                dataType : 'json',
+                success : function(res){
+                    layer.closeAll();
+                    if(res.code == 1){
+                        layer.msg(res.msg, {shade: layer_shade, time: 1000}, function(){
+                            // window.location.reload();
+                        });
+                    }else{
+                        showErrorMsg(res.msg);
+                    }
+                },
+                error: function(e){
+                    layer.closeAll();
+                    layer.alert(e.responseText, {icon: 5, title:false});
+                }
+            });
+        }
+    </script>
+{/eq}
